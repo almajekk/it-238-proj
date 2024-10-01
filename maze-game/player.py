@@ -15,6 +15,7 @@ class Player:
         self.up_pressed = False
         self.down_pressed = False
         self.speed = 4
+        self.visibility_radius = 100  # Adjust as needed
 
     # get current cell position of the player
     def get_current_cell(self, x, y, grid_cells):

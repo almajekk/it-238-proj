@@ -27,21 +27,50 @@ class Main():
 
     # draws all configs; maze, player, instructions, and time
     def _draw(self, maze, tile, player, game, clock):
-        # draw maze
-        [cell.draw(self.screen, tile) for cell in maze.grid_cells]
-        # add a goal point to reach
-        game.add_goal_point(self.screen)
-        # draw every player movement
+        # Fill the entire screen with a general background color
+        self.screen.fill("gray")
+
+        # Define maze area and fill it with gray to restore the original look
+        maze_area = pygame.Rect(0, 0, 602, 602)
+        self.screen.fill(pygame.Color("gray"), maze_area)
+
+        # Draw the maze, including only the visible cells within the radius
+        for cell in maze.grid_cells:
+            cell_x, cell_y = cell.x * tile, cell.y * tile
+            distance = ((player.x - cell_x) ** 2 + (player.y - cell_y) ** 2) ** 0.5
+            if distance <= player.visibility_radius:
+                cell.draw(self.screen, tile)
+
+        # Draw the goal point if within the visibility radius
+        goal_distance = ((player.x - game.goal_cell.x * tile) ** 2 + (player.y - game.goal_cell.y * tile) ** 2) ** 0.5
+        if goal_distance <= player.visibility_radius:
+            game.add_goal_point(self.screen)
+
+        # Draw the player
         player.draw(self.screen)
         player.update()
-        # instructions, clock, winning message
+
+        # Draw black overlay mask with gradient to limit the view
+        overlay = pygame.Surface(maze_area.size, pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 255))
+
+        # Create a gradient effect
+        gradient_radius = player.visibility_radius
+        for i in range(gradient_radius, 0, -1):
+            alpha = int(255 * (i / gradient_radius))
+            pygame.draw.circle(overlay, (0, 0, 0, alpha), (int(player.x), int(player.y)), i)
+
+        self.screen.blit(overlay, maze_area.topleft)
+
+        # Draw other UI elements like instructions, clock, and win message
         self.instructions()
         if self.game_over:
             clock.stop_timer()
-            self.screen.blit(game.message(),(610,120))
+            self.screen.blit(game.message(), (610, 120))
         else:
             clock.update_timer()
-        self.screen.blit(clock.display_timer(), (625,200))
+        self.screen.blit(clock.display_timer(), (625, 200))
+
         pygame.display.flip()
 
         # main game loop
